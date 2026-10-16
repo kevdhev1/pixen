@@ -49,7 +49,7 @@ export const PRESET_DESKTOP: ViewportPreset = {
 export const PRESET_TABLET: ViewportPreset = {
   name: "tablet",
   viewport: { width: 768, height: 1024 },
-  deviceScaleFactor: 1,
+  deviceScaleFactor: 2,
   deviceHints: { isMobile: false, hasTouch: true, isLandscape: false },
   sheetFormat: "A4_PORTRAIT",
 };
@@ -57,7 +57,7 @@ export const PRESET_TABLET: ViewportPreset = {
 export const PRESET_MOBILE: ViewportPreset = {
   name: "mobile",
   viewport: { width: 390, height: 844 },
-  deviceScaleFactor: 1,
+  deviceScaleFactor: 2,
   deviceHints: { isMobile: true, hasTouch: true, isLandscape: false },
   sheetFormat: "A4_PORTRAIT",
 };
