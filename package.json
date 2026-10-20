@@ -18,6 +18,9 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write ."
   },
+  "bin": {
+    "pixen": "./dist/pixen/cli/index.js"
+  },
   "author": "Kevin Marquez",
   "license": "AGPL-3.0-only",
   "devEngines": {
