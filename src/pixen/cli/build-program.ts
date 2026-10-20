@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Command } from "commander";
-import type { RunOptions } from "@/pixen/models/index.js";
+import type { ReferenceResult, RunOptions } from "@/pixen/models/index.js";
 import { PRESETS } from "@/pixen/models/index.js";
-import { run } from "@/pixen/run.js";
+import { generateReference } from "@/pixen/reference.js";
 import { normalizeUrl } from "@/pixen/url.js";
 
 /* Read `package.json` once and cache the result */
@@ -18,12 +18,12 @@ function readPackageJson(): { name: string; version: string; description: string
 
 export type BuildProgramDeps = {
   /* Injectable for tests. By default, the actual `run` */
-  run?: (options: RunOptions) => Promise<void>;
+  generateReference?: (options: RunOptions) => Promise<ReferenceResult>;
 };
 
 /* Build the Commander `Command` without executing it */
 export function buildProgram(deps: BuildProgramDeps = {}): Command {
-  const runFn = deps.run ?? run;
+  const generateFn = deps.generateReference ?? generateReference;
   const pkg = readPackageJson();
 
   const program = new Command();
@@ -45,7 +45,15 @@ export function buildProgram(deps: BuildProgramDeps = {}): Command {
         verbose: false,
       };
 
-      await runFn(runOptions);
+      const result = await generateFn(runOptions);
+
+      console.log(`URL:     ${result.url}`);
+      console.log(`Output:  ${result.outputDir}`);
+      console.log(`Presets: ${result.presets.join(", ")}`);
+
+      for (const warning of result.warnings) {
+        console.warn(`warning: ${warning.message}`);
+      }
     });
 
   return program;
