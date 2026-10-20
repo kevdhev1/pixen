@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+import { buildProgram } from "./build-program.js";
+
+/* Entry point */
+buildProgram().parseAsync();
