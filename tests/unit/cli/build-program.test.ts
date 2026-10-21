@@ -1,8 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildProgram } from "@/pixen/cli/build-program.js";
-import type { RunOptions } from "@/pixen/models/index.js";
+import type { ReferenceResult, RunOptions } from "@/pixen/models/index.js";
 
-/* Builds a program configured for testing */
+beforeEach(() => {
+  vi.spyOn(console, "log").mockImplementation(() => {});
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 function buildTestProgram(deps?: Parameters<typeof buildProgram>[0]) {
   const program = buildProgram(deps);
   program.exitOverride();
@@ -10,6 +18,15 @@ function buildTestProgram(deps?: Parameters<typeof buildProgram>[0]) {
     writeErr: () => {},
   });
   return program;
+}
+
+function makeStubResult(): ReferenceResult {
+  return {
+    url: "https://example.com/",
+    outputDir: "./reference",
+    presets: ["desktop", "tablet", "mobile"],
+    warnings: [],
+  };
 }
 
 describe("buildProgram — metadata", () => {
@@ -23,21 +40,23 @@ describe("buildProgram — metadata", () => {
 
 describe("buildProgram — arguments and options", () => {
   it("requires the <url> argument", async () => {
-    const program = buildTestProgram({ run: vi.fn() });
+    const program = buildTestProgram({ generateReference: vi.fn() });
 
     await expect(program.parseAsync(["node", "pixen"])).rejects.toThrow();
   });
 
   it("accepts a valid URL and passes full presetNames", async () => {
-    const runMock = vi.fn<(opts: RunOptions) => Promise<void>>().mockResolvedValue(undefined);
-    const program = buildTestProgram({ run: runMock });
+    const generateMock = vi
+      .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
+      .mockResolvedValue(makeStubResult());
+    const program = buildTestProgram({ generateReference: generateMock });
 
     await program.parseAsync(["node", "pixen", "https://example.com"]);
 
-    expect(runMock).toHaveBeenCalledOnce();
+    expect(generateMock).toHaveBeenCalledOnce();
 
-    const call = runMock.mock.lastCall;
-    if (!call) throw new Error("run was not called");
+    const call = generateMock.mock.lastCall;
+    if (!call) throw new Error("generateReference was not called");
     const [opts] = call;
 
     expect(opts.url.href).toBe("https://example.com/");
@@ -47,33 +66,37 @@ describe("buildProgram — arguments and options", () => {
   });
 
   it("--out overwrites the default directory", async () => {
-    const runMock = vi.fn<(opts: RunOptions) => Promise<void>>().mockResolvedValue(undefined);
-    const program = buildTestProgram({ run: runMock });
+    const generateMock = vi
+      .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
+      .mockResolvedValue(makeStubResult());
+    const program = buildTestProgram({ generateReference: generateMock });
 
     await program.parseAsync(["node", "pixen", "https://example.com", "--out", "/tmp/refs"]);
 
-    const call = runMock.mock.lastCall;
-    if (!call) throw new Error("run was not called");
+    const call = generateMock.mock.lastCall;
+    if (!call) throw new Error("generateReference was not called");
     const [opts] = call;
 
     expect(opts.outputDir).toBe("/tmp/refs");
   });
 
   it("normalizes the URL (no scheme → https)", async () => {
-    const runMock = vi.fn<(opts: RunOptions) => Promise<void>>().mockResolvedValue(undefined);
-    const program = buildTestProgram({ run: runMock });
+    const generateMock = vi
+      .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
+      .mockResolvedValue(makeStubResult());
+    const program = buildTestProgram({ generateReference: generateMock });
 
     await program.parseAsync(["node", "pixen", "example.com"]);
 
-    const call = runMock.mock.lastCall;
-    if (!call) throw new Error("run was not called");
+    const call = generateMock.mock.lastCall;
+    if (!call) throw new Error("generateReference was not called");
     const [opts] = call;
 
     expect(opts.url.href).toBe("https://example.com/");
   });
 
   it("rejects invalid URLs with PixenError", async () => {
-    const program = buildTestProgram({ run: vi.fn() });
+    const program = buildTestProgram({ generateReference: vi.fn() });
 
     await expect(program.parseAsync(["node", "pixen", "file:///etc/passwd"])).rejects.toThrow(
       /Unsupported scheme/,
@@ -82,12 +105,28 @@ describe("buildProgram — arguments and options", () => {
 });
 
 describe("buildProgram — side effects", () => {
-  it("calls run exactly once per invocation", async () => {
-    const runMock = vi.fn<(opts: RunOptions) => Promise<void>>().mockResolvedValue(undefined);
-    const program = buildTestProgram({ run: runMock });
+  it("calls generateReference exactly once per invocation", async () => {
+    const generateMock = vi
+      .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
+      .mockResolvedValue(makeStubResult());
+    const program = buildTestProgram({ generateReference: generateMock });
 
     await program.parseAsync(["node", "pixen", "https://example.com"]);
 
-    expect(runMock).toHaveBeenCalledTimes(1);
+    expect(generateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("prints the result returned by generateReference", async () => {
+    const generateMock = vi
+      .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
+      .mockResolvedValue(makeStubResult());
+    const program = buildTestProgram({ generateReference: generateMock });
+
+    await program.parseAsync(["node", "pixen", "https://example.com"]);
+
+    const logSpy = vi.mocked(console.log);
+    expect(logSpy).toHaveBeenCalledWith("URL:     https://example.com/");
+    expect(logSpy).toHaveBeenCalledWith("Output:  ./reference");
+    expect(logSpy).toHaveBeenCalledWith("Presets: desktop, tablet, mobile");
   });
 });
