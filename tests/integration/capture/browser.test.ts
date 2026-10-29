@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { chromium } from "playwright";
+import { describe, expect, it, vi } from "vitest";
 import { withBrowser } from "@/pixen/capture/browser.js";
+import { PixenError } from "@/pixen/models/index.js";
 
 describe("withBrowser — lifecycle", () => {
   it("runs the callback with a connected browser", async () => {
@@ -45,5 +47,54 @@ describe("withBrowser — lifecycle", () => {
     }));
 
     expect(result).toEqual({ title: "example", count: 3 });
+  });
+});
+
+describe("withBrowser — missing Chromium", () => {
+  it("throws BROWSER_NOT_INSTALLED when executable is missing", async () => {
+    const spy = vi.spyOn(chromium, "executablePath").mockReturnValue("/nonexistent/chromium");
+
+    try {
+      await expect(withBrowser(async () => "unreachable")).rejects.toMatchObject({
+        code: "BROWSER_NOT_INSTALLED",
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("the error message includes the install command and Linux hint", async () => {
+    const spy = vi.spyOn(chromium, "executablePath").mockReturnValue("/nonexistent/chromium");
+
+    try {
+      let caught: unknown;
+      try {
+        await withBrowser(async () => "unreachable");
+      } catch (err) {
+        caught = err;
+      }
+
+      expect(PixenError.isPixenError(caught)).toBe(true);
+      if (PixenError.isPixenError(caught)) {
+        expect(caught.message).toContain("playwright install chromium");
+        expect(caught.message).toContain("--with-deps");
+        expect(caught.message).toMatch(/Playwright \d+\.\d+\.\d+/);
+      }
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("does not launch the browser when executable is missing", async () => {
+    const execSpy = vi.spyOn(chromium, "executablePath").mockReturnValue("/nonexistent/chromium");
+    const launchSpy = vi.spyOn(chromium, "launch");
+
+    try {
+      await expect(withBrowser(async () => "unreachable")).rejects.toThrow();
+      expect(launchSpy).not.toHaveBeenCalled();
+    } finally {
+      execSpy.mockRestore();
+      launchSpy.mockRestore();
+    }
   });
 });
