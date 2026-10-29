@@ -2,6 +2,7 @@
 
 export type PixenErrorCode =
   | "INVALID_URL"
+  | "BROWSER_NOT_INSTALLED"
   | "BROWSER_LAUNCH_FAILED"
   | "NAVIGATION_FAILED"
   | "NAVIGATION_TIMEOUT"
