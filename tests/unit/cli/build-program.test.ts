@@ -25,6 +25,12 @@ function makeStubResult(): ReferenceResult {
     url: "https://example.com/",
     outputDir: "./reference",
     presets: ["desktop", "tablet", "mobile"],
+    pageInfo: {
+      title: "Example",
+      finalUrl: "https://example.com/",
+      documentHeight: 1234,
+      hasHorizontalOverflow: false,
+    },
     warnings: [],
   };
 }
@@ -125,8 +131,11 @@ describe("buildProgram — side effects", () => {
     await program.parseAsync(["node", "pixen", "https://example.com"]);
 
     const logSpy = vi.mocked(console.log);
-    expect(logSpy).toHaveBeenCalledWith("URL:     https://example.com/");
-    expect(logSpy).toHaveBeenCalledWith("Output:  ./reference");
-    expect(logSpy).toHaveBeenCalledWith("Presets: desktop, tablet, mobile");
+
+    expect(logSpy).toHaveBeenCalledWith("URL:      https://example.com/");
+    expect(logSpy).toHaveBeenCalledWith("Title:    Example");
+    expect(logSpy).toHaveBeenCalledWith("Height:   1234px");
+    expect(logSpy).toHaveBeenCalledWith("Output:   ./reference");
+    expect(logSpy).toHaveBeenCalledWith("Presets:  desktop, tablet, mobile");
   });
 });
