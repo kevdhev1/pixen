@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { withBrowser } from "@/pixen/capture/browser.js";
 import { NAVIGATION_TIMEOUT_MS, WAIT_TIMEOUT_MS, withPage } from "@/pixen/capture/page.js";
 import { type FixturesServer, startFixturesServer } from "../../helpers/fixtures-server.js";
@@ -82,6 +82,29 @@ describe("withPage — timeouts enforced", () => {
         },
         { navigationTimeoutMs: 100 },
       );
+    });
+  });
+});
+
+describe("withPage — error precedence", () => {
+  it("preserves the callback error even if context.close() throws", async () => {
+    await withBrowser(async (browser) => {
+      await expect(
+        withPage(browser, async ({ context }) => {
+          vi.spyOn(context, "close").mockRejectedValueOnce(new Error("close failed"));
+          throw new Error("original error");
+        }),
+      ).rejects.toThrow("original error");
+    });
+  });
+
+  it("propagates the close error when the callback succeeds", async () => {
+    await withBrowser(async (browser) => {
+      await expect(
+        withPage(browser, async ({ context }) => {
+          vi.spyOn(context, "close").mockRejectedValueOnce(new Error("close failed"));
+        }),
+      ).rejects.toThrow("close failed");
     });
   });
 });

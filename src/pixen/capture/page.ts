@@ -29,13 +29,24 @@ export async function withPage<T>(
   const waitTimeoutMs = options.waitTimeoutMs ?? WAIT_TIMEOUT_MS;
 
   const context = await browser.newContext();
+
+  let result: T;
   try {
     const page = await context.newPage();
     page.setDefaultNavigationTimeout(navigationTimeoutMs);
     page.setDefaultTimeout(waitTimeoutMs);
 
-    return await fn({ page, context });
-  } finally {
-    await context.close();
+    result = await fn({ page, context });
+  } catch (err) {
+    try {
+      await context.close();
+    } catch {
+      // Preserves the original error from `fn` (or from newPage /
+      // setDefaultTimeout). The context close is best-effort here.
+    }
+    throw err;
   }
+
+  await context.close();
+  return result;
 }
