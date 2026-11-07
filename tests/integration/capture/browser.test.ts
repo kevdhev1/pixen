@@ -98,3 +98,23 @@ describe("withBrowser — missing Chromium", () => {
     }
   });
 });
+
+describe("withBrowser — error precedence", () => {
+  it("preserves the callback error even if browser.close() throws", async () => {
+    await expect(
+      withBrowser(async (browser) => {
+        vi.spyOn(browser, "close").mockRejectedValueOnce(new Error("close failed"));
+        throw new Error("original error");
+      }),
+    ).rejects.toThrow("original error");
+  });
+
+  it("propagates the close error when the callback succeeds", async () => {
+    await expect(
+      withBrowser(async (browser) => {
+        vi.spyOn(browser, "close").mockRejectedValueOnce(new Error("close failed"));
+        return "ok";
+      }),
+    ).rejects.toThrow("close failed");
+  });
+});

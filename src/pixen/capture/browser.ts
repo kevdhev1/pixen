@@ -66,9 +66,18 @@ export async function withBrowser<T>(fn: (browser: Browser) => Promise<T>): Prom
     });
   }
 
+  let result: T;
   try {
-    return await fn(browser);
-  } finally {
-    await browser.close();
+    result = await fn(browser);
+  } catch (err) {
+    try {
+      await browser.close();
+    } catch {
+      // Preserves the original error from `fn`.
+    }
+    throw err;
   }
+
+  await browser.close();
+  return result;
 }
