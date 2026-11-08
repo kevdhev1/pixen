@@ -1,4 +1,5 @@
 import type { Browser, BrowserContext, Page } from "playwright";
+import type { ContextOptions } from "@/pixen/capture/viewport.js";
 
 /* Timeouts in milliseconds. Every wait in Pixen is bounded by these */
 export const NAVIGATION_TIMEOUT_MS = 30_000;
@@ -14,6 +15,7 @@ export type PageScope = {
 export type WithPageOptions = {
   readonly navigationTimeoutMs?: number;
   readonly waitTimeoutMs?: number;
+  readonly contextOptions?: ContextOptions;
 };
 
 /*
@@ -28,7 +30,7 @@ export async function withPage<T>(
   const navigationTimeoutMs = options.navigationTimeoutMs ?? NAVIGATION_TIMEOUT_MS;
   const waitTimeoutMs = options.waitTimeoutMs ?? WAIT_TIMEOUT_MS;
 
-  const context = await browser.newContext();
+  const context = await browser.newContext(options.contextOptions ?? {});
 
   let result: T;
   try {
