@@ -6,7 +6,8 @@ export type PixenWarningCode =
   | "FONT_LOAD_TIMEOUT"
   | "STICKY_ELEMENT_DETECTED"
   | "SCREENSHOT_SIZE_LIMIT"
-  | "CROP_OUT_OF_BOUNDS";
+  | "CROP_OUT_OF_BOUNDS"
+  | "HORIZONTAL_OVERFLOW";
 
 /* Typed warning */
 
