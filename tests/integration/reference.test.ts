@@ -50,6 +50,20 @@ describe("generateReference — happy path", () => {
     expect(result.pageInfo.documentHeight).toBeGreaterThan(3000);
     expect(result.warnings).toHaveLength(0);
   });
+
+  it("emits HORIZONTAL_OVERFLOW when the page is wider than the preset", async () => {
+    const result = await generateReference(makeOptions(`${server.baseUrl}/overflow`));
+
+    const codes = result.warnings.map((w) => w.code);
+    expect(codes).toContain("HORIZONTAL_OVERFLOW");
+
+    const overflow = result.warnings.find((w) => w.code === "HORIZONTAL_OVERFLOW");
+    if (!overflow) throw new Error("expected HORIZONTAL_OVERFLOW warning");
+    expect(overflow.data).toMatchObject({
+      preset: "desktop",
+      requestedWidth: 1440,
+    });
+  });
 });
 
 describe("generateReference — errors", () => {

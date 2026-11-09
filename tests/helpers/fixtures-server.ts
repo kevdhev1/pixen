@@ -73,6 +73,13 @@ export async function startFixturesServer(
           return;
         }
 
+        case "/overflow": {
+          const html = await readFile(path.join(FIXTURES_DIR, "overflow.html"));
+          res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          res.end(html);
+          return;
+        }
+
         case "/img/tiny.png": {
           res.writeHead(200, { "content-type": "image/png" });
           res.end(TINY_PNG);
