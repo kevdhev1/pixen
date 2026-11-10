@@ -10,6 +10,6 @@ export {
   PRESETS,
   PRESETS_BY_NAME,
 } from "./preset.js";
-export type { ReferenceResult } from "./result.js";
+export type { PresetResult, ReferenceResult } from "./result.js";
 export type { PixenWarning, PixenWarningCode, WarningCollector } from "./warnings.js";
 export { InMemoryWarningCollector } from "./warnings.js";

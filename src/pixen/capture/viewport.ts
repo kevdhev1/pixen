@@ -41,8 +41,8 @@ export function presetToContextOptions(preset: ViewportPreset): ContextOptions {
   if (!descriptor) {
     throw new Error(
       `Playwright device descriptor "${descriptorName}" was not found. ` +
-      `This usually means the installed Playwright version differs from ` +
-      `the one the preset was designed against.`,
+        `This usually means the installed Playwright version differs from ` +
+        `the one the preset was designed against.`,
     );
   }
 
