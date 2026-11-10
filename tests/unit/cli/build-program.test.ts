@@ -24,13 +24,35 @@ function makeStubResult(): ReferenceResult {
   return {
     url: "https://example.com/",
     outputDir: "./reference",
-    presets: ["desktop", "tablet", "mobile"],
-    pageInfo: {
-      title: "Example",
-      finalUrl: "https://example.com/",
-      documentHeight: 1234,
-      hasHorizontalOverflow: false,
-    },
+    results: [
+      {
+        preset: "desktop",
+        pageInfo: {
+          title: "Example",
+          finalUrl: "https://example.com/",
+          documentHeight: 823,
+          hasHorizontalOverflow: false,
+        },
+      },
+      {
+        preset: "tablet",
+        pageInfo: {
+          title: "Example",
+          finalUrl: "https://example.com/",
+          documentHeight: 1100,
+          hasHorizontalOverflow: false,
+        },
+      },
+      {
+        preset: "mobile",
+        pageInfo: {
+          title: "Example",
+          finalUrl: "https://example.com/",
+          documentHeight: 1400,
+          hasHorizontalOverflow: false,
+        },
+      },
+    ],
     warnings: [],
   };
 }
@@ -122,7 +144,7 @@ describe("buildProgram — side effects", () => {
     expect(generateMock).toHaveBeenCalledTimes(1);
   });
 
-  it("prints the result returned by generateReference", async () => {
+  it("prints one line per preset result", async () => {
     const generateMock = vi
       .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
       .mockResolvedValue(makeStubResult());
@@ -131,11 +153,10 @@ describe("buildProgram — side effects", () => {
     await program.parseAsync(["node", "pixen", "https://example.com"]);
 
     const logSpy = vi.mocked(console.log);
-
     expect(logSpy).toHaveBeenCalledWith("URL:      https://example.com/");
-    expect(logSpy).toHaveBeenCalledWith("Title:    Example");
-    expect(logSpy).toHaveBeenCalledWith("Height:   1234px");
     expect(logSpy).toHaveBeenCalledWith("Output:   ./reference");
-    expect(logSpy).toHaveBeenCalledWith("Presets:  desktop, tablet, mobile");
+    expect(logSpy).toHaveBeenCalledWith("  desktop  Example — 823px");
+    expect(logSpy).toHaveBeenCalledWith("  tablet   Example — 1100px");
+    expect(logSpy).toHaveBeenCalledWith("  mobile   Example — 1400px");
   });
 });

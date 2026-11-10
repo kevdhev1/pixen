@@ -47,11 +47,12 @@ export function buildProgram(deps: BuildProgramDeps = {}): Command {
 
       const result = await generateFn(runOptions);
 
-      console.log(`URL:      ${result.pageInfo.finalUrl}`);
-      console.log(`Title:    ${result.pageInfo.title || "(untitled)"}`);
-      console.log(`Height:   ${result.pageInfo.documentHeight}px`);
+      console.log(`URL:      ${result.url}`);
       console.log(`Output:   ${result.outputDir}`);
-      console.log(`Presets:  ${result.presets.join(", ")}`);
+      for (const r of result.results) {
+        const title = r.pageInfo.title || "(untitled)";
+        console.log(`  ${r.preset.padEnd(8)} ${title} — ${r.pageInfo.documentHeight}px`);
+      }
 
       for (const warning of result.warnings) {
         console.warn(`warning: [${warning.code}] ${warning.message}`);
