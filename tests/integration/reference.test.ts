@@ -73,6 +73,16 @@ describe("generateReference — happy path", () => {
     }
   });
 
+  it("each preset loads the page from scratch (not resized)", async () => {
+    const result = await generateReference(
+      makeOptions(`${server.baseUrl}/viewport-aware`, ["desktop", "tablet", "mobile"]),
+    );
+
+    expect(result.results[0]?.pageInfo.title).toBe("loaded-at-1440");
+    expect(result.results[1]?.pageInfo.title).toBe("loaded-at-768");
+    expect(result.results[2]?.pageInfo.title).toBe("loaded-at-390");
+  });
+
   it("emits HORIZONTAL_OVERFLOW when the page is wider than the preset", async () => {
     const result = await generateReference(makeOptions(`${server.baseUrl}/overflow`));
 
