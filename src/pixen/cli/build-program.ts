@@ -16,6 +16,12 @@ function readPackageJson(): { name: string; version: string; description: string
   };
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 export type BuildProgramDeps = {
   /* Injectable for tests. By default, the actual `run` */
   generateReference?: (options: RunOptions) => Promise<ReferenceResult>;
@@ -51,7 +57,8 @@ export function buildProgram(deps: BuildProgramDeps = {}): Command {
       console.log(`Output:   ${result.outputDir}`);
       for (const r of result.results) {
         const title = r.pageInfo.title || "(untitled)";
-        console.log(`  ${r.preset.padEnd(8)} ${title} — ${r.pageInfo.documentHeight}px`);
+        const size = formatBytes(r.capturedBytes);
+        console.log(`  ${r.preset.padEnd(8)} ${title} — ${r.pageInfo.documentHeight}px — ${size}`);
       }
 
       for (const warning of result.warnings) {

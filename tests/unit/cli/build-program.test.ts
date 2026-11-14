@@ -33,6 +33,7 @@ function makeStubResult(): ReferenceResult {
           documentHeight: 823,
           hasHorizontalOverflow: false,
         },
+        capturedBytes: 12345,
       },
       {
         preset: "tablet",
@@ -42,6 +43,7 @@ function makeStubResult(): ReferenceResult {
           documentHeight: 1100,
           hasHorizontalOverflow: false,
         },
+        capturedBytes: 23456,
       },
       {
         preset: "mobile",
@@ -51,6 +53,7 @@ function makeStubResult(): ReferenceResult {
           documentHeight: 1400,
           hasHorizontalOverflow: false,
         },
+        capturedBytes: 34567,
       },
     ],
     warnings: [],
@@ -155,8 +158,8 @@ describe("buildProgram — side effects", () => {
     const logSpy = vi.mocked(console.log);
     expect(logSpy).toHaveBeenCalledWith("URL:      https://example.com/");
     expect(logSpy).toHaveBeenCalledWith("Output:   ./reference");
-    expect(logSpy).toHaveBeenCalledWith("  desktop  Example — 823px");
-    expect(logSpy).toHaveBeenCalledWith("  tablet   Example — 1100px");
-    expect(logSpy).toHaveBeenCalledWith("  mobile   Example — 1400px");
+    expect(logSpy).toHaveBeenCalledWith("  desktop  Example — 823px — 12.1 KB");
+    expect(logSpy).toHaveBeenCalledWith("  tablet   Example — 1100px — 22.9 KB");
+    expect(logSpy).toHaveBeenCalledWith("  mobile   Example — 1400px — 33.8 KB");
   });
 });
