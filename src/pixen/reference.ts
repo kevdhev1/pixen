@@ -1,8 +1,10 @@
+import path from "node:path";
 import { withBrowser } from "@/pixen/capture/browser.js";
 import { buildOverflowWarning, measureLayoutWidth } from "@/pixen/capture/layout-width.js";
 import { measurePageInfo } from "@/pixen/capture/measure.js";
 import { navigate } from "@/pixen/capture/navigate.js";
 import { withPage } from "@/pixen/capture/page.js";
+import { captureFullPage } from "@/pixen/capture/screenshot.js";
 import { stabilize } from "@/pixen/capture/stabilize.js";
 import { presetToContextOptions } from "@/pixen/capture/viewport.js";
 import {
@@ -12,6 +14,7 @@ import {
   type ReferenceResult,
   type RunOptions,
 } from "@/pixen/models/index.js";
+import { withWorkspace } from "@/pixen/workspace.js";
 
 /*
  * Runs the pipeline once per requested preset, sequentially.
@@ -28,44 +31,49 @@ import {
 export async function generateReference(options: RunOptions): Promise<ReferenceResult> {
   const warnings = new InMemoryWarningCollector();
 
-  const results = await withBrowser(async (browser) => {
-    const acc: PresetResult[] = [];
+  return withWorkspace(async (ws) => {
+    const results = await withBrowser(async (browser) => {
+      const acc: PresetResult[] = [];
 
-    for (const presetName of options.presetNames) {
-      const preset = PRESETS_BY_NAME[presetName];
-      const contextOptions = presetToContextOptions(preset);
+      for (const presetName of options.presetNames) {
+        const preset = PRESETS_BY_NAME[presetName];
+        const contextOptions = presetToContextOptions(preset);
 
-      const pageInfo = await withPage(
-        browser,
-        async ({ page }) => {
-          const nav = await navigate(page, options.url);
-          await stabilize(page, warnings);
+        const presetResult = await withPage(
+          browser,
+          async ({ page }) => {
+            const nav = await navigate(page, options.url);
+            await stabilize(page, warnings);
 
-          const measured = await measureLayoutWidth(page);
-          const overflowWarning = buildOverflowWarning(
-            preset.name,
-            preset.viewport.width,
-            measured,
-          );
-          if (overflowWarning) {
-            warnings.add(overflowWarning);
-          }
+            const measured = await measureLayoutWidth(page);
+            const overflowWarning = buildOverflowWarning(
+              preset.name,
+              preset.viewport.width,
+              measured,
+            );
+            if (overflowWarning) {
+              warnings.add(overflowWarning);
+            }
 
-          return measurePageInfo(page, nav.finalUrl);
-        },
-        { contextOptions },
-      );
+            const info = await measurePageInfo(page, nav.finalUrl);
+            const captured = await captureFullPage(page, path.join(ws.path, `${preset.name}.png`));
 
-      acc.push({ preset: preset.name, pageInfo });
-    }
+            return { pageInfo: info, capturedBytes: captured.bytes };
+          },
+          { contextOptions },
+        );
 
-    return acc;
+        acc.push({ preset: preset.name, ...presetResult });
+      }
+
+      return acc;
+    });
+
+    return {
+      url: options.url.href,
+      outputDir: options.outputDir,
+      results,
+      warnings: warnings.list(),
+    };
   });
-
-  return {
-    url: options.url.href,
-    outputDir: options.outputDir,
-    results,
-    warnings: warnings.list(),
-  };
 }
