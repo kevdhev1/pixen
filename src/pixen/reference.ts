@@ -56,7 +56,11 @@ export async function generateReference(options: RunOptions): Promise<ReferenceR
             }
 
             const info = await measurePageInfo(page, nav.finalUrl);
-            const captured = await captureFullPage(page, path.join(ws.path, `${preset.name}.png`));
+            const captured = await captureFullPage(page, path.join(ws.path, `${preset.name}.png`), {
+              viewportWidthCss: preset.viewport.width,
+              documentHeightCss: info.documentHeight,
+              deviceScaleFactor: preset.deviceScaleFactor,
+            });
 
             return { pageInfo: info, capturedBytes: captured.bytes };
           },
