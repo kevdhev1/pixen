@@ -8,14 +8,12 @@
 export type SheetFormat = "A4_LANDSCAPE" | "A4_PORTRAIT";
 
 /* Viewport for a preset. Values are in CSS pixels. */
-
 export type Viewport = {
   width: number;
   height: number;
 };
 
 /* Flags passed to the Playwright context. */
-
 export type DeviceHints = {
   isMobile: boolean;
   hasTouch: boolean;
@@ -23,7 +21,6 @@ export type DeviceHints = {
 };
 
 /* Complete capture preset. */
-
 export type ViewportPreset = {
   readonly name: PresetName;
   readonly viewport: Viewport;
@@ -65,9 +62,12 @@ export const PRESET_MOBILE: ViewportPreset = {
 export const PRESETS = [PRESET_DESKTOP, PRESET_TABLET, PRESET_MOBILE] as const;
 
 /* Map by name for direct access. */
-
 export const PRESETS_BY_NAME: Record<PresetName, ViewportPreset> = {
   desktop: PRESET_DESKTOP,
   tablet: PRESET_TABLET,
   mobile: PRESET_MOBILE,
 };
+
+export function isPresetName(value: string): value is PresetName {
+  return Object.hasOwn(PRESETS_BY_NAME, value);
+}
