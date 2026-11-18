@@ -21,19 +21,7 @@ export type FixturesServer = {
   readonly close: () => Promise<void>;
 };
 
-/**
- * Starts a minimal HTTP server that serves test fixtures from `tests/fixtures/`.
- *
- * Routes:
- *   GET /            → simple.html
- *   GET /simple      → simple.html
- *   GET /slow        → slow.html, delayed by `slowDelayMs`
- *   GET /redirect    → 302 redirect to /simple
- *   GET /lazy        → lazy.html
- *   GET /img/tiny.png → 1x1 transparent PNG
- *   *                → 404
- */
-
+/* Starts a minimal HTTP server that serves test fixtures from `tests/fixtures/` */
 export async function startFixturesServer(
   options: FixturesServerOptions = {},
 ): Promise<FixturesServer> {
@@ -82,6 +70,20 @@ export async function startFixturesServer(
 
         case "/viewport-aware": {
           const html = await readFile(path.join(FIXTURES_DIR, "viewport-aware.html"));
+          res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          res.end(html);
+          return;
+        }
+
+        case "/hero-100vh": {
+          const html = await readFile(path.join(FIXTURES_DIR, "hero-100vh.html"));
+          res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          res.end(html);
+          return;
+        }
+
+        case "/sticky-fixed": {
+          const html = await readFile(path.join(FIXTURES_DIR, "sticky-fixed.html"));
           res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
           res.end(html);
           return;

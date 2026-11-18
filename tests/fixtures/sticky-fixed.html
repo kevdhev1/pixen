@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sticky + Fixed</title>
+    <style>
+      body { margin: 0; font-family: sans-serif; }
+      header {
+        position: sticky;
+        top: 0;
+        background: #dc2626;
+        color: white;
+        padding: 1rem;
+        z-index: 100;
+        font-size: 1.5rem;
+      }
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #16a34a;
+        color: white;
+        padding: 1rem;
+        z-index: 100;
+        font-size: 1.5rem;
+      }
+      .content { padding: 2rem; padding-bottom: 120px; }
+      .block {
+        height: 500px;
+        background: #e5e7eb;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>Sticky header</header>
+    <div class="content">
+      <div class="block">Block 1</div>
+      <div class="block">Block 2</div>
+      <div class="block">Block 3</div>
+      <div class="block">Block 4</div>
+      <div class="block">Block 5</div>
+    </div>
+    <footer>Fixed footer</footer>
+  </body>
+</html>
