@@ -1,4 +1,5 @@
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 import { withBrowser } from "@/pixen/capture/browser.js";
 import { buildOverflowWarning, measureLayoutWidth } from "@/pixen/capture/layout-width.js";
 import { measurePageInfo } from "@/pixen/capture/measure.js";
@@ -16,21 +17,8 @@ import {
 } from "@/pixen/models/index.js";
 import { withWorkspace } from "@/pixen/workspace.js";
 
-/*
- * Runs the pipeline once per requested preset, sequentially.
- *
- * Design choices:
- * - One browser for the whole run (heavy to launch, expensive in memory).
- * - One fresh context per preset: isolates cookies/storage/cache and applies
- *   each preset's viewport, DPR, and mobile emulation at the context level.
- * - Sequential iteration: Chromium already uses significant CPU/memory per
- *   render; parallel presets would add risk without measurement.
- * - Errors abort the run: if one preset fails, the remaining presets are not
- *   attempted. `withBrowser` closes the browser regardless.
- */
+/* Runs the pipeline once per requested preset, sequentially */
 export async function generateReference(options: RunOptions): Promise<ReferenceResult> {
-  const warnings = new InMemoryWarningCollector();
-
   return withWorkspace(async (ws) => {
     const results = await withBrowser(async (browser) => {
       const acc: PresetResult[] = [];
@@ -38,12 +26,14 @@ export async function generateReference(options: RunOptions): Promise<ReferenceR
       for (const presetName of options.presetNames) {
         const preset = PRESETS_BY_NAME[presetName];
         const contextOptions = presetToContextOptions(preset);
+        const presetWarnings = new InMemoryWarningCollector();
+        const start = performance.now();
 
-        const presetResult = await withPage(
+        const presetData = await withPage(
           browser,
           async ({ page }) => {
             const nav = await navigate(page, options.url);
-            await stabilize(page, warnings);
+            await stabilize(page, presetWarnings);
 
             const measured = await measureLayoutWidth(page);
             const overflowWarning = buildOverflowWarning(
@@ -52,7 +42,7 @@ export async function generateReference(options: RunOptions): Promise<ReferenceR
               measured,
             );
             if (overflowWarning) {
-              warnings.add(overflowWarning);
+              presetWarnings.add(overflowWarning);
             }
 
             const info = await measurePageInfo(page, nav.finalUrl);
@@ -62,22 +52,34 @@ export async function generateReference(options: RunOptions): Promise<ReferenceR
               deviceScaleFactor: preset.deviceScaleFactor,
             });
 
-            return { pageInfo: info, capturedBytes: captured.bytes };
+            return { pageInfo: info, capture: captured };
           },
           { contextOptions },
         );
 
-        acc.push({ preset: preset.name, ...presetResult });
+        const elapsedMs = Math.round(performance.now() - start);
+
+        acc.push({
+          preset: preset.name,
+          pageInfo: presetData.pageInfo,
+          capturedBytes: presetData.capture.bytes,
+          capturedWidthPx: presetData.capture.width,
+          capturedHeightPx: presetData.capture.height,
+          elapsedMs,
+          warnings: presetWarnings.list(),
+        });
       }
 
       return acc;
     });
 
+    const allWarnings = results.flatMap((r) => r.warnings);
+
     return {
       url: options.url.href,
       outputDir: options.outputDir,
       results,
-      warnings: warnings.list(),
+      warnings: allWarnings,
     };
   });
 }

@@ -4,8 +4,11 @@ import type { PageInfo, PixenWarning, PresetName } from "@/pixen/models/index.js
 export type PresetResult = {
   readonly preset: PresetName;
   readonly pageInfo: PageInfo;
-  /* TEMPORARY */
   readonly capturedBytes: number;
+  readonly capturedWidthPx: number;
+  readonly capturedHeightPx: number;
+  readonly elapsedMs: number;
+  readonly warnings: readonly PixenWarning[];
 };
 
 /* Result of a reference generation run */
