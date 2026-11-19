@@ -30,30 +30,42 @@ function makeStubResult(): ReferenceResult {
         pageInfo: {
           title: "Example",
           finalUrl: "https://example.com/",
-          documentHeight: 823,
+          documentHeight: 900,
           hasHorizontalOverflow: false,
         },
         capturedBytes: 12345,
+        capturedWidthPx: 1440,
+        capturedHeightPx: 900,
+        elapsedMs: 1234,
+        warnings: [],
       },
       {
         preset: "tablet",
         pageInfo: {
           title: "Example",
           finalUrl: "https://example.com/",
-          documentHeight: 1100,
+          documentHeight: 1024,
           hasHorizontalOverflow: false,
         },
         capturedBytes: 23456,
+        capturedWidthPx: 1536,
+        capturedHeightPx: 2048,
+        elapsedMs: 1500,
+        warnings: [],
       },
       {
         preset: "mobile",
         pageInfo: {
           title: "Example",
           finalUrl: "https://example.com/",
-          documentHeight: 1400,
+          documentHeight: 844,
           hasHorizontalOverflow: false,
         },
         capturedBytes: 34567,
+        capturedWidthPx: 780,
+        capturedHeightPx: 1688,
+        elapsedMs: 1400,
+        warnings: [],
       },
     ],
     warnings: [],
@@ -147,7 +159,7 @@ describe("buildProgram — side effects", () => {
     expect(generateMock).toHaveBeenCalledTimes(1);
   });
 
-  it("prints one line per preset result", async () => {
+  it("prints one line per preset with dims, size, and time", async () => {
     const generateMock = vi
       .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
       .mockResolvedValue(makeStubResult());
@@ -158,8 +170,29 @@ describe("buildProgram — side effects", () => {
     const logSpy = vi.mocked(console.log);
     expect(logSpy).toHaveBeenCalledWith("URL:      https://example.com/");
     expect(logSpy).toHaveBeenCalledWith("Output:   ./reference");
-    expect(logSpy).toHaveBeenCalledWith("  desktop  Example — 823px — 12.1 KB");
-    expect(logSpy).toHaveBeenCalledWith("  tablet   Example — 1100px — 22.9 KB");
-    expect(logSpy).toHaveBeenCalledWith("  mobile   Example — 1400px — 33.8 KB");
+    expect(logSpy).toHaveBeenCalledWith("  desktop  Example — 1440×900px — 12.1 KB — 1.2s");
+    expect(logSpy).toHaveBeenCalledWith("  tablet   Example — 1536×2048px — 22.9 KB — 1.5s");
+    expect(logSpy).toHaveBeenCalledWith("  mobile   Example — 780×1688px — 33.8 KB — 1.4s");
+  });
+
+  it("--preset runs only the specified preset", async () => {
+    const generateMock = vi
+      .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
+      .mockResolvedValue(makeStubResult());
+    const program = buildTestProgram({ generateReference: generateMock });
+
+    await program.parseAsync(["node", "pixen", "https://example.com", "--preset", "mobile"]);
+
+    const call = generateMock.mock.lastCall;
+    if (!call) throw new Error("generateReference was not called");
+    expect(call[0].presetNames).toEqual(["mobile"]);
+  });
+
+  it("rejects invalid --preset values", async () => {
+    const program = buildTestProgram({ generateReference: vi.fn() });
+
+    await expect(
+      program.parseAsync(["node", "pixen", "https://example.com", "--preset", "foo"]),
+    ).rejects.toMatchObject({ code: "INVALID_PRESET" });
   });
 });
