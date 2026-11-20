@@ -97,6 +97,32 @@ describe("generateReference — happy path", () => {
       requestedWidth: 1440,
     });
   });
+
+  it("records elapsed time per preset", async () => {
+    const result = await generateReference(makeOptions(`${server.baseUrl}/simple`));
+    const desktop = result.results[0];
+    if (!desktop) throw new Error("expected desktop result");
+    expect(desktop.elapsedMs).toBeGreaterThan(0);
+  });
+
+  it("records PNG dimensions per preset", async () => {
+    const result = await generateReference(makeOptions(`${server.baseUrl}/simple`));
+    const desktop = result.results[0];
+    if (!desktop) throw new Error("expected desktop result");
+    expect(desktop.capturedWidthPx).toBe(1440);
+    expect(desktop.capturedHeightPx).toBeGreaterThanOrEqual(desktop.pageInfo.documentHeight - 2);
+  });
+
+  it("attaches warnings to the preset that emitted them", async () => {
+    const result = await generateReference(
+      makeOptions(`${server.baseUrl}/overflow`, ["desktop", "tablet", "mobile"]),
+    );
+
+    for (const r of result.results) {
+      const codes = r.warnings.map((w) => w.code);
+      expect(codes).toContain("HORIZONTAL_OVERFLOW");
+    }
+  });
 });
 
 describe("generateReference — errors", () => {
