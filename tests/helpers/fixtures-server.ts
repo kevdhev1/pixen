@@ -68,6 +68,13 @@ export async function startFixturesServer(
           return;
         }
 
+        case "/overflow-near": {
+          const html = await readFile(path.join(FIXTURES_DIR, "overflow-near.html"));
+          res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+          res.end(html);
+          return;
+        }
+
         case "/viewport-aware": {
           const html = await readFile(path.join(FIXTURES_DIR, "viewport-aware.html"));
           res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
