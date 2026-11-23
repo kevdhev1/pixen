@@ -1,11 +1,10 @@
-import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { withBrowser } from "@/pixen/capture/browser.js";
+import { captureBlocks } from "@/pixen/capture/capture-blocks.js";
 import { buildOverflowWarning, measureLayoutWidth } from "@/pixen/capture/layout-width.js";
 import { measurePageInfo } from "@/pixen/capture/measure.js";
 import { navigate } from "@/pixen/capture/navigate.js";
 import { withPage } from "@/pixen/capture/page.js";
-import { captureFullPage } from "@/pixen/capture/screenshot.js";
 import { stabilize } from "@/pixen/capture/stabilize.js";
 import { presetToContextOptions } from "@/pixen/capture/viewport.js";
 import {
@@ -17,7 +16,6 @@ import {
 } from "@/pixen/models/index.js";
 import { withWorkspace } from "@/pixen/workspace.js";
 
-/* Runs the pipeline once per requested preset, sequentially */
 export async function generateReference(options: RunOptions): Promise<ReferenceResult> {
   return withWorkspace(async (ws) => {
     const results = await withBrowser(async (browser) => {
@@ -46,13 +44,9 @@ export async function generateReference(options: RunOptions): Promise<ReferenceR
             }
 
             const info = await measurePageInfo(page, nav.finalUrl);
-            const captured = await captureFullPage(page, path.join(ws.path, `${preset.name}.png`), {
-              viewportWidthCss: preset.viewport.width,
-              documentHeightCss: info.documentHeight,
-              deviceScaleFactor: preset.deviceScaleFactor,
-            });
+            const captured = await captureBlocks(page, preset, info, ws.path);
 
-            return { pageInfo: info, capture: captured };
+            return { pageInfo: info, captured };
           },
           { contextOptions },
         );
@@ -62,9 +56,10 @@ export async function generateReference(options: RunOptions): Promise<ReferenceR
         acc.push({
           preset: preset.name,
           pageInfo: presetData.pageInfo,
-          capturedBytes: presetData.capture.bytes,
-          capturedWidthPx: presetData.capture.width,
-          capturedHeightPx: presetData.capture.height,
+          capturedWidthPx: preset.viewport.width * preset.deviceScaleFactor,
+          capturedHeightPx: presetData.pageInfo.documentHeight * preset.deviceScaleFactor,
+          chunks: presetData.captured.chunks,
+          omittedDevicePx: presetData.captured.omittedDevicePx,
           elapsedMs,
           warnings: presetWarnings.list(),
         });
