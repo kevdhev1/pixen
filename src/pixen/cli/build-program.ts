@@ -79,10 +79,15 @@ export function buildProgram(deps: BuildProgramDeps = {}): Command {
       for (const r of result.results) {
         const title = r.pageInfo.title || "(untitled)";
         const dims = `${r.capturedWidthPx}×${r.capturedHeightPx}px`;
-        const size = formatBytes(r.capturedBytes);
+        const chunkCount = r.chunks.length;
+        const totalBytes = r.chunks.reduce((sum, c) => sum + c.bytes, 0);
+        const size = formatBytes(totalBytes);
         const time = formatDuration(r.elapsedMs);
+        const omitted = r.omittedDevicePx > 0 ? ` (${r.omittedDevicePx} device px omitted)` : "";
 
-        console.log(`  ${r.preset.padEnd(8)} ${title} — ${dims} — ${size} — ${time}`);
+        console.log(
+          `  ${r.preset.padEnd(8)} ${title} — ${dims} — ${chunkCount} chunks${omitted} — ${size} — ${time}`,
+        );
 
         for (const w of r.warnings) {
           console.warn(`    warning: [${w.code}] ${w.message}`);
