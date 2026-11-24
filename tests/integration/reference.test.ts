@@ -105,12 +105,21 @@ describe("generateReference — happy path", () => {
     expect(desktop.elapsedMs).toBeGreaterThan(0);
   });
 
-  it("records PNG dimensions per preset", async () => {
+  it("records PNG dimensions and chunks per preset", async () => {
     const result = await generateReference(makeOptions(`${server.baseUrl}/simple`));
     const desktop = result.results[0];
     if (!desktop) throw new Error("expected desktop result");
+
+    // Derived dimensions from the preset × DPR
     expect(desktop.capturedWidthPx).toBe(1440);
     expect(desktop.capturedHeightPx).toBeGreaterThanOrEqual(desktop.pageInfo.documentHeight - 2);
+
+    // At least one chunk was actually produced, with the expected width
+    expect(desktop.chunks.length).toBeGreaterThanOrEqual(1);
+    const first = desktop.chunks[0];
+    if (!first) throw new Error("expected at least one chunk");
+    expect(first.widthPx).toBe(1440);
+    expect(first.heightPx).toBeGreaterThan(0);
   });
 
   it("attaches warnings to the preset that emitted them", async () => {
