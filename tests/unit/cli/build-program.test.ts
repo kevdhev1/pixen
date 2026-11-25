@@ -33,9 +33,20 @@ function makeStubResult(): ReferenceResult {
           documentHeight: 900,
           hasHorizontalOverflow: false,
         },
-        capturedBytes: 12345,
         capturedWidthPx: 1440,
         capturedHeightPx: 900,
+        chunks: [
+          {
+            preset: "desktop",
+            blockIndex: 0,
+            fragmentIndex: 0,
+            path: "/tmp/x/desktop/block-0000-chunk-00.png",
+            widthPx: 1440,
+            heightPx: 900,
+            bytes: 12345,
+          },
+        ],
+        omittedDevicePx: 0,
         elapsedMs: 1234,
         warnings: [],
       },
@@ -47,9 +58,20 @@ function makeStubResult(): ReferenceResult {
           documentHeight: 1024,
           hasHorizontalOverflow: false,
         },
-        capturedBytes: 23456,
         capturedWidthPx: 1536,
         capturedHeightPx: 2048,
+        chunks: [
+          {
+            preset: "tablet",
+            blockIndex: 0,
+            fragmentIndex: 0,
+            path: "/tmp/x/tablet/block-0000-chunk-00.png",
+            widthPx: 1536,
+            heightPx: 2048,
+            bytes: 23456,
+          },
+        ],
+        omittedDevicePx: 0,
         elapsedMs: 1500,
         warnings: [],
       },
@@ -61,9 +83,29 @@ function makeStubResult(): ReferenceResult {
           documentHeight: 844,
           hasHorizontalOverflow: false,
         },
-        capturedBytes: 34567,
         capturedWidthPx: 780,
         capturedHeightPx: 1688,
+        chunks: [
+          {
+            preset: "mobile",
+            blockIndex: 0,
+            fragmentIndex: 0,
+            path: "/tmp/x/mobile/block-0000-chunk-00.png",
+            widthPx: 780,
+            heightPx: 844,
+            bytes: 17678,
+          },
+          {
+            preset: "mobile",
+            blockIndex: 0,
+            fragmentIndex: 1,
+            path: "/tmp/x/mobile/block-0000-chunk-01.png",
+            widthPx: 780,
+            heightPx: 844,
+            bytes: 16889,
+          },
+        ],
+        omittedDevicePx: 0,
         elapsedMs: 1400,
         warnings: [],
       },
@@ -159,7 +201,7 @@ describe("buildProgram — side effects", () => {
     expect(generateMock).toHaveBeenCalledTimes(1);
   });
 
-  it("prints one line per preset with dims, size, and time", async () => {
+  it("prints one line per preset with chunk count, size, and time", async () => {
     const generateMock = vi
       .fn<(opts: RunOptions) => Promise<ReferenceResult>>()
       .mockResolvedValue(makeStubResult());
@@ -170,9 +212,15 @@ describe("buildProgram — side effects", () => {
     const logSpy = vi.mocked(console.log);
     expect(logSpy).toHaveBeenCalledWith("URL:      https://example.com/");
     expect(logSpy).toHaveBeenCalledWith("Output:   ./reference");
-    expect(logSpy).toHaveBeenCalledWith("  desktop  Example — 1440×900px — 12.1 KB — 1.2s");
-    expect(logSpy).toHaveBeenCalledWith("  tablet   Example — 1536×2048px — 22.9 KB — 1.5s");
-    expect(logSpy).toHaveBeenCalledWith("  mobile   Example — 780×1688px — 33.8 KB — 1.4s");
+    expect(logSpy).toHaveBeenCalledWith(
+      "  desktop  Example — 1440×900px — 1 chunks — 12.1 KB — 1.2s",
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      "  tablet   Example — 1536×2048px — 1 chunks — 22.9 KB — 1.5s",
+    );
+    expect(logSpy).toHaveBeenCalledWith(
+      "  mobile   Example — 780×1688px — 2 chunks — 33.8 KB — 1.4s",
+    );
   });
 
   it("--preset runs only the specified preset", async () => {
