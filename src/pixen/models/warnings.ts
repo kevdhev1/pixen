@@ -1,5 +1,4 @@
 /* Pixen stable warning codes */
-
 export type PixenWarningCode =
   | "SECTION_DETECTION_PARTIAL"
   | "LAZY_LOAD_TIMEOUT"
@@ -7,10 +6,10 @@ export type PixenWarningCode =
   | "STICKY_ELEMENT_DETECTED"
   | "SCREENSHOT_SIZE_LIMIT"
   | "CROP_OUT_OF_BOUNDS"
-  | "HORIZONTAL_OVERFLOW";
+  | "HORIZONTAL_OVERFLOW"
+  | "VERTICAL_REMAINDER_OMITTED";
 
 /* Typed warning */
-
 export type PixenWarning = {
   readonly code: PixenWarningCode;
   readonly message: string;
@@ -23,7 +22,6 @@ export type WarningCollector = {
 };
 
 /* In-memory accumulation */
-
 export class InMemoryWarningCollector implements WarningCollector {
   readonly #warnings: PixenWarning[] = [];
 

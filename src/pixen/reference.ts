@@ -46,6 +46,19 @@ export async function generateReference(options: RunOptions): Promise<ReferenceR
             const info = await measurePageInfo(page, nav.finalUrl);
             const captured = await captureBlocks(page, preset, info, ws.path);
 
+            if (captured.omittedDevicePx > 0) {
+              const omittedCss = captured.omittedDevicePx / preset.deviceScaleFactor;
+              presetWarnings.add({
+                code: "VERTICAL_REMAINDER_OMITTED",
+                message: `Omitted ${omittedCss} CSS px at the bottom of the page (below the 32 CSS px threshold).`,
+                data: {
+                  preset: preset.name,
+                  omittedDevicePx: captured.omittedDevicePx,
+                  omittedCssPx: omittedCss,
+                },
+              });
+            }
+
             return { pageInfo: info, captured };
           },
           { contextOptions },
