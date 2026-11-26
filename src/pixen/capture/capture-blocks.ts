@@ -66,6 +66,7 @@ export async function captureBlocks(
   await mkdir(presetDir, { recursive: true });
 
   const chunks: ChunkArtifact[] = [];
+  let conservedDevicePx = 0;
 
   for (const block of plan.blocks) {
     const blockY = block.yCssPx * dpr;
@@ -152,15 +153,40 @@ export async function captureBlocks(
       });
     }
 
-    if (summedHeight !== blockH) {
+    if (summedHeight > blockH) {
       throw new PixenError(
         "CAPTURE_FAILED",
-        `Block ${block.index} chunks sum to ${summedHeight}px, expected ${blockH}px.`,
-        { context: { blockIndex: block.index, summedHeight, expectedHeight: blockH } },
+        `Block ${block.index} chunks exceed block height: ${summedHeight}px > ${blockH}px.`,
+        {
+          context: {
+            blockIndex: block.index,
+            summedHeight,
+            blockH,
+          },
+        },
       );
     }
+    conservedDevicePx += summedHeight;
 
     await unlink(blockTempPath);
+  }
+
+  // Conservation check: every device row of the page must be either conserved
+  // (as part of a chunk) or explicitly omitted by the plan. This catches both
+  // a chunk silently missing and a plan/execution drift, and is robust to the
+  // case where the last partial block is not captured at all.
+  if (conservedDevicePx + plan.omittedDevicePx !== pageHeightDevice) {
+    throw new PixenError(
+      "CAPTURE_FAILED",
+      `Conserved (${conservedDevicePx}px) + omitted (${plan.omittedDevicePx}px) does not equal page height (${pageHeightDevice}px).`,
+      {
+        context: {
+          conservedDevicePx,
+          omittedDevicePx: plan.omittedDevicePx,
+          pageHeightDevice,
+        },
+      },
+    );
   }
 
   return { chunks, omittedDevicePx: plan.omittedDevicePx };
