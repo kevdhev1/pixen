@@ -146,4 +146,15 @@ describe("generateReference — errors", () => {
       generateReference(makeOptions(`${server.baseUrl}/img/tiny.png`)),
     ).rejects.toMatchObject({ code: "NAVIGATION_FAILED" });
   });
+
+  it("emits VERTICAL_REMAINDER_OMITTED for mobile with a small remainder", async () => {
+    const result = await generateReference(makeOptions(`${server.baseUrl}/remainder`, ["mobile"]));
+
+    const mobile = result.results[0];
+    if (!mobile) throw new Error("expected mobile result");
+
+    const codes = mobile.warnings.map((w) => w.code);
+    expect(codes).toContain("VERTICAL_REMAINDER_OMITTED");
+    expect(mobile.omittedDevicePx).toBeGreaterThan(0);
+  });
 });
