@@ -7,7 +7,8 @@ export type PixenWarningCode =
   | "SCREENSHOT_SIZE_LIMIT"
   | "CROP_OUT_OF_BOUNDS"
   | "HORIZONTAL_OVERFLOW"
-  | "VERTICAL_REMAINDER_OMITTED";
+  | "VERTICAL_REMAINDER_OMITTED"
+  | "HEIGHT_CHANGED_DURING_CAPTURE";
 
 /* Typed warning */
 export type PixenWarning = {
