@@ -28,3 +28,21 @@ export async function measurePageInfo(page: Page, finalUrl: string): Promise<Pag
     ...measurements,
   };
 }
+
+/*
+ * Re-measures the document height. Intended for the post-capture stability
+ * check.
+ */
+export async function measureDocumentHeight(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const root = document.documentElement;
+    const body = document.body;
+
+    return Math.max(
+      root.scrollHeight,
+      root.offsetHeight,
+      body?.scrollHeight ?? 0,
+      body?.offsetHeight ?? 0,
+    );
+  });
+}
